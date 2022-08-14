@@ -1,0 +1,43 @@
+.excalidraw-wrapper {
+    position: absolute;
+    overflow: hidden;
+    color: var(--text-primary-color);
+    display: flex;
+    top: 0; /*200px;*/
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+}
+
+
+.themeIcon {
+    margin-left: 10px!important;
+}
+
+/* boton interno del script pero no funciona */
+/* .disable-zen-mode{
+    visibility: visible!important;
+    opacity: 1!important;
+} */
+
+/*Fix para seguir mostrando el Zen mode y poder apagarlo */
+.layer-ui__wrapper__footer-left--transition-bottom .zen-mode-off{
+    position:absolute!important;
+    transition: transform 0.5s ease-in-out;
+    transform: translate(0, -82px);
+}
+
+.excalidraw  button.footer-element {
+    height: 2rem;
+    margin: 0.4rem;
+    margin-left:10px;
+    margin-right:10px;
+    color: var(--icon-fill-color);
+}
+
+#app {
+    font-family: sans-serif;
+    text-align: center;
+}
