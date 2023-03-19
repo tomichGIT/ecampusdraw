@@ -1,6 +1,10 @@
 # ecampusdraw
 whiteboard compartido en react, basado en excalidraw
 
+documentación oficial:
+[docs](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/installation)
+[codesandbox](https://codesandbox.io/p/github/excalidraw/excalidraw/)
+
 tengo 2 versiones armadas:
 1) con menus opciones etc (renombrar src_bkp a src)
 https://codesandbox.io/s/excalidraw-ehlz3?file=/public/index.html

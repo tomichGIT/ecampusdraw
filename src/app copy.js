@@ -11,15 +11,7 @@ import {
     MIME_TYPES,
     sceneCoordsToViewportCoords,
     viewportCoordsToSceneCoords,
-    restoreElements,
-    // nuevos items v0.14
-    Footer,
-    Button,
-    LiveCollaborationTrigger,
-    MainMenu,
-    Sidebar,
-    WelcomeScreen,
-    useDevice
+    restoreElements
   } from "@excalidraw/excalidraw";
 //   import {
 //     AppState,
@@ -43,14 +35,12 @@ const defaultLang = { code: "es-ES", label: "Español" };
 
 export default function App() {
     const excalidrawRef = React.useRef(null);
-    const [theme, setTheme] = useState("light"); // light o dark
+    const [theme, setTheme] = useState("dark");
     const [viewModeEnabled, setViewModeEnabled] = useState(false);
     const [zenModeEnabled, setZenModeEnabled] = useState(false);
     const [gridModeEnabled, setGridModeEnabled] = useState(false);
 
 
-    // cuento la cantidad de elementos NO borrados
-    const [cantElements, setCantElementos]= useState(0);
     
     
     const [
@@ -71,22 +61,15 @@ export default function App() {
 
       }, [excalidrawAPI]);
     
-      const renderTopRightUI = (isMobile) => {
-        //const device = useDevice();
-
-
-        if (isMobile) {
-          return null;
-        }
+      const renderTopRightUI = () => {
         return (
-          <Button
+          <button className="footer-element"
             onClick={() => alert("Presiona F11 para verlo pantalla completa")}
-            style={{ width: "100px", height:"40px" }}
+            style={{ height: "2.5rem" }}
           >
             FullScreen
-          </Button>
+          </button>
         );
-
       };
 
       const ICONS = {
@@ -103,54 +86,6 @@ export default function App() {
       };
 
    
-      const renderWelcome = () => {
-
-        // console.log("es Mobile: ",isMobile);
-        // if (isMobile) {
-        //   return null;
-        // }
-        
-        
-        return (
-              <>
-              {/* <WelcomeScreen.Hints.ToolbarHint>
-                  <p> texto personalizado ¡Elije una herramienta y empieza a dibujar! </p>
-              </WelcomeScreen.Hints.ToolbarHint> */}
-              {/* textos por defecto */}
-              <WelcomeScreen>
-                <WelcomeScreen.Hints.ToolbarHint />
-                <WelcomeScreen.Hints.MenuHint />
-                <WelcomeScreen.Hints.HelpHint />
-
-                  <WelcomeScreen.Center>
-                    {/* <WelcomeScreen.Center.Logo /> */}
-                    <WelcomeScreen.Center.Logo>
-                      <img src="https://ecampus.com.ar/img/logo_edge.png"  style={{width:"300px"}}/>
-                    </WelcomeScreen.Center.Logo>
-                    <WelcomeScreen.Center.Heading>
-                      Herramienta de dibujo eCampusDraw (Beta)
-                    </WelcomeScreen.Center.Heading>
-
-                    <WelcomeScreen.Center.Menu>
-                      <WelcomeScreen.Center.MenuItemLoadScene />
-                      <WelcomeScreen.Center.MenuItemHelp />
-
-                      <WelcomeScreen.Center.MenuItemLink 
-                        href="https://ecampus.com.ar/ecampusdraw" shortcut={null} //icon={ICONS.SUN}
-                      >eCampusDraw Link
-                      </WelcomeScreen.Center.MenuItemLink>
-
-                      <WelcomeScreen.Center.MenuItemLink 
-                        href="https://ecampus.com.ar/" shortcut={null} //icon={ICONS.SUN}
-                      >eCampus.com.ar
-                      </WelcomeScreen.Center.MenuItemLink>
-                    </WelcomeScreen.Center.Menu>
-
-                  </WelcomeScreen.Center>
-                </WelcomeScreen>
-              </>
-        );
-      }
 
       const renderFooter = () => {
         return (
@@ -158,41 +93,26 @@ export default function App() {
             {/* <button className="footer-element" onClick={updateScene}>
                 Actualizar Escena
             </button> */}
-            {/* <button className="footer-element" onClick={() => {
+            <button className="footer-element" onClick={() => {
                 excalidrawAPI?.resetScene(); }}> 
                 Limpiar Escena
-            </button> */}
-            
-            <Button
-                style={{ width: "150px", height:"40px", marginLeft: "1rem", marginRight: "1rem" }}
-                onClick={() => {
-                  excalidrawAPI?.resetScene(); }}>
-                Limpiar Escena
-            </Button>
-
+            </button>
             <label>
             <input type="checkbox" checked={viewModeEnabled}
                 onChange={() => setViewModeEnabled(!viewModeEnabled)}
-            />Presentación &nbsp;
+            />View mode &nbsp;
             </label> |
             <label className="zen-mode-off">
             <input type="checkbox" checked={zenModeEnabled}
                 onChange={() => setZenModeEnabled(!zenModeEnabled)}
-            />Modo Zen &nbsp;
+            />Zen mode &nbsp;
             </label> |
             <label>
             <input type="checkbox" checked={gridModeEnabled}
                 onChange={() => setGridModeEnabled(!gridModeEnabled)}
-            />Cuadrícula
+            />Grid
             </label>
-
-            {/* <Button onClick={() => { let newTheme = (theme === "dark")?"light":"dark"; setTheme(newTheme); }}>
-              <div className="ToolIcon__icon">{(theme === "dark")?ICONS.SUN:ICONS.MOON}</div>
-            </Button> */}
-
-            <button className="themeIcon ToolIcon_type_button ToolIcon_size_small ToolIcon" 
-              style={{ marginLeft: "1rem" }}
-              onClick={() => {
+            <button className="themeIcon ToolIcon_type_button ToolIcon_size_small ToolIcon" onClick={() => {
                     let newTheme = (theme === "dark")?"light":"dark";
                     setTheme(newTheme);
                 }}>
@@ -239,9 +159,6 @@ export default function App() {
     };
 
   
-    //const device=useDevice();
-
-
     return (
     
     <div>
@@ -250,21 +167,11 @@ export default function App() {
 
       <Excalidraw 
         ref={(api) => setExcalidrawAPI(api)}
-        // no uso initialData porque uso WelcomeScreen
-        //initialData={InitialData}
+        initialData={InitialData}
         autoFocus={true}
         UIOptions={{ canvasActions: { loadScene: true, theme:true } }}
         onChange= {(elements, state) => { 
-                    //console.log("Elements :", elements, "State : ", state) 
-                    //console.log("State : ", state);
-                    console.log("Elements es: ",elements);
-
-                    const count = elements.filter((obj) => obj.isDeleted != true).length;
-                    //const cantElementos=elements.length; // borrados y sin borrar..
-                    console.log("cant elemntos Activos es: ",count);
-                    setCantElementos(count);
-                  }
-                  }
+        console.log("Elements :", elements, "State : ", state) }}
         //onPointerUpdate= {(payload) => console.log(payload) }
         langCode={defaultLang.code}
         //handleKeyboardGlobally={true}
@@ -273,61 +180,9 @@ export default function App() {
         viewModeEnabled= {viewModeEnabled}
         zenModeEnabled= {zenModeEnabled}
         gridModeEnabled= {gridModeEnabled}
-        
-        renderTopRightUI={renderTopRightUI}
-        //renderWelcomeScreen={renderWelcome}
-      >
-
-
-        {/*  puedo armarme un MainMenu personalizado, pero se borra el original.*/}
-        
-        <MainMenu>
-          
-              <MainMenu.DefaultItems.LoadScene />
-              <MainMenu.DefaultItems.Export />
-              <MainMenu.DefaultItems.SaveToActiveFile />
-              <MainMenu.DefaultItems.SaveAsImage />
-              <MainMenu.DefaultItems.Help />
-              <MainMenu.DefaultItems.ToggleTheme />
-              <MainMenu.DefaultItems.ClearCanvas />
-              
-            <MainMenu.Separator />
-            {/* <MainMenu.ItemCustom>
-              <div style={{ width: "100%", height:"1px", backgroundColor: "#d6d6d6", margin: "0.5rem 0px"}}> 
-                  eCampus
-              </div>
-            </MainMenu.ItemCustom> */}
-              
-            <MainMenu.Group title="Opciones de eCampus">
-              <MainMenu.Item onSelect={() => window.alert("Prox.")}>
-                Abrir Galeria
-              </MainMenu.Item>
-              <MainMenu.Item onSelect={() => window.alert("Prox.")}>
-                Enviar a Casillero
-              </MainMenu.Item>
-            </MainMenu.Group>
-            
-              <MainMenu.Separator />
-            <MainMenu.DefaultItems.ChangeCanvasBackground />
-              
-
-        </MainMenu> 
-          
-
-          {!cantElements ?
-            (renderWelcome()) :("")
-          }
-
-          
-          {/* {renderWelcome()} */}
-
-           
-
-        <Footer>
-          {renderFooter()}
-        </Footer>        
-
-      </Excalidraw>
+        //renderTopRightUI={renderTopRightUI}
+        renderFooter={renderFooter}
+      />
       </div>
     </div>
     );

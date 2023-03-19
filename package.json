@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "whiteboard compartido",
   "main": "src/index.js",
-  "homepage": "ecampusdraw",
+  "homepage": "/ecampusdraw",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
@@ -15,7 +15,7 @@
   "author": "Tomas SG <tomich20@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "@excalidraw/excalidraw": "^0.12.0",
+    "@excalidraw/excalidraw": "^0.14.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
