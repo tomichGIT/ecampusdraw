@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+
+// tal vez no hace falta instalar un router para obtener lso params, voy a probar con vanilla
+//import { useParams } from "react-router-dom";
 import InitialData from "./initialData";
 
 import {
@@ -48,6 +51,11 @@ export default function App() {
     const [zenModeEnabled, setZenModeEnabled] = useState(false);
     const [gridModeEnabled, setGridModeEnabled] = useState(false);
 
+    // elementos en pantalla, los uso para intiaulData caundo cargo un archivo desde mi DB
+    const [elements, setElements] = useState([]);
+
+    // lo puedo usar para cuando hago exportToCanvas me genera un canvas virtual y luego una URL de la imagen creada
+    const [canvasUrl, setCanvasUrl] = useState("");
 
     // cuento la cantidad de elementos NO borrados
     const [cantElements, setCantElementos]= useState(0);
@@ -63,6 +71,15 @@ export default function App() {
     // si tengo en el GET alguna librería cargada de "Explorar Bibliotecas" la agrego a mi libreria
     useHandleLibrary({ excalidrawAPI });
 
+    
+
+    // misitio.com/eCampusDraw/idGrupo/idItem
+    // desde la URL que elegi cargo el archivo de la escena
+    useEffect(() => {
+      openFromDB(); // This function will be executed ONLY ONCE after Excalidraw gets loaded
+    }, [excalidrawAPI]); // Empty dependency array
+    
+
     useEffect(() => {
         if (!excalidrawAPI) {
           return;
@@ -70,6 +87,9 @@ export default function App() {
         console.log("ejecutando useEffect que no me acuerdo que es");
 
       }, [excalidrawAPI]);
+
+
+
     
       const renderTopRightUI = (isMobile) => {
         //const device = useDevice();
@@ -101,6 +121,194 @@ export default function App() {
           </svg>
         ),
       };
+
+
+      //  ----------------------------- INI Funciones para interactar con eCampus -----------------------------
+      
+      // usar esta funcion para obtener únicamente los parametros del final
+      const getUrlParameters = (url) => {
+        // http://ecampusDraw.com/25?item_id=19&id=95
+        const siteUrl = window.location.search;
+        //console.log("site url es: ",siteUrl); // ?item_id=9&id=95
+        const urlParams = new URLSearchParams(siteUrl);
+        urlParams.forEach((value, key) => {
+          console.log(key + ': ' + value);
+        });
+      }
+
+      // obtener idGrupo de la URL para el API (tambien mirar getUrlParameters() de arriba que es para los parametros)
+      const getGroupAndIdFromUrl = () => {
+        // Get the full URL
+        // http://localhost:5173/ecampusdraw/25/99/512/?item_id=9#token=w0wa9EtHaMpzNzqNcDpk8
+        // 0: "http:"
+        // 1: ""
+        // 2: "localhost:5173"
+        // 3: "ecampusdraw"
+        // 4: "25"
+        // 5: "99"
+        // 6: "512" <-- el último es el que me interesa
+        // 7: "?item_id=9#token=w0wa9EtHaMpzNzqNcDpk8"
+
+        // Get the last part of the URL without parameters or fragments
+
+        const url = window.location.href;
+        const urlParts = url.split('/');
+        //console.log("partes: ",urlParts);
+        const lastPart = urlParts[urlParts.length - 1];
+        const secondToLastPart = urlParts[urlParts.length - 2];
+        const thirdToLastPart = urlParts[urlParts.length - 3];
+        let idGrupo = 0; // puede valer 0 si es casillero 
+        let idItem = 0; // puede valer 0 si es nuevo
+
+        // if que funciona para ambos casos:
+        // The following 2 URLs are the same site (with and without params)
+        // http://mysite.com/96/25
+        // http://mysite.com/96/25/?item_id=12#room=9
+        if (lastPart !== '') {
+          idItem = lastPart;
+          idGrupo = secondToLastPart;
+        } else if (secondToLastPart !== '') {
+          idItem = secondToLastPart;
+          idGrupo = thirdToLastPart;
+        }
+        idGrupo = parseInt(idGrupo);
+        idItem = parseInt(idItem);
+        //console.log(idGrupo); // should output "25" for both examples
+
+        return {
+          idGrupo:idGrupo,
+          idItem:idItem
+        };
+      }
+
+      // intentando duplicar el JSON que se genera al gaurdar un archivo en tu PC
+      const createArchivo = () => {
+        if (!excalidrawAPI) { return }
+        const elements = excalidrawAPI.getSceneElements();
+        const all_elements = excalidrawAPI.getSceneElementsIncludingDeleted();
+        //const nonDeletedElements = elements2.filter(element => !element.isDeleted); //solo los no eliminados
+
+        if (!elements || !elements.length) { return }
+
+        return {
+
+          type: "excalidraw",
+          version: 2,
+          source: "https://ecampus.com.ar/ecampusdraw/",
+          //all_elements, //incluye borrados
+          elements,     // solo visibles
+          appState: {
+           // ...initialData.appState,
+            "gridSize": null,
+            "viewBackgroundColor": "#ffffff",
+            exportWithDarkMode: false,
+          },
+          files: excalidrawAPI.getFiles(),
+          //getDimensions: () => { return {width: 350, height: 350}}
+        }
+      }
+
+      const openFromDB = () => {
+        const params = getGroupAndIdFromUrl(); // obtengo el idGrupo de la URL para el API, puede valer 0 para casillero:  https://ecampus.com.ar/plugins/ecampusDraw/25/0/ o https://ecampus.com.ar/plugins/ecampusDraw/0/18/
+        // idGrupo e idItem SI pueden valer 0 si es casillero personal, lo que no puedo valer es NULL
+        if(isNaN(params.idGrupo) || params.idGrupo == null || params.idGrupo == undefined){ return };  // no especifique ningun grupo
+        if(isNaN(params.idItem) || params.idItem == null || params.idItem == undefined){ return };    // no espeicifique ningun item
+              
+        
+        //fetch('http://localhost/ecampus/public_html/API/v1/ecampusDraw/'+params.idGrupo+'/'+params.idItem, {
+        fetch('../../../API/v1/ecampusDraw/'+params.idGrupo+'/'+params.idItem, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status == '404'){
+              alert("Canvas no encontrado, tienes bien la URL?");
+              console.log("no se encontró el elemento cambiar la URL al elemento que corresponda");
+              return;
+            }
+            console.log("datos obtenidos: ", data.data.titulo);
+            const sceneData=JSON.parse(data.data.extra);
+            console.log("sceneData es:", sceneData);
+            excalidrawAPI?.updateScene(sceneData);
+            // cargar en el canvas data.data.extra con json_decode
+
+        })
+        .catch(error => {
+            console.error(error);
+        });
+      }
+
+  
+
+      // Guarda datos en la base de datos (requiere enviar un IdGrupo y que sea POST)
+      const saveToDB = () => {
+        //const canvasData = JSON.stringify(excalidrawAPI.getSceneElements());
+       // const canvasData ="";//exportToCanvas();
+
+        //  if (!excalidrawAPI) { return }
+        // const elements = excalidrawAPI.getSceneElements();
+        // if (!elements || !elements.length) { return }
+        // const canvas = await exportToCanvas({
+        //   elements,
+        //   appState: {
+        //    // ...initialData.appState,
+        //     exportWithDarkMode: false,
+        //   },
+        //   files: excalidrawAPI.getFiles(),
+        //   getDimensions: () => { return {width: 350, height: 350}}
+        // });
+
+        const jsonForStorage = createArchivo();
+
+        //console.log("canvasDatos es: ",jsonForStorage);
+
+        // dibujo en el nuevo canvas...
+        //const ctx = canvas.getContext("2d");
+        //ctx.font = "30px Virgil";
+        //ctx.strokeText("My custom text", 50, 60);
+
+        // si tuviera un elemento HTML sería así:
+        // <div className="export export-canvas">
+        //   <img src={canvasUrl} alt="" />
+        // </div>
+        // setCanvasUrl(canvas.toDataURL());
+
+
+
+        // devuelve {idGrupo: 25, idItem: 99} // grupo 25,  item 99
+        // devuelve {idGrupo: 0, idItem: 14}  // casillero, item 14
+        // devuelve {idGrupo: 0, idItem: 0}   // casillero, item nuevo
+        // devuelve {idGrupo: 6, idItem: 14}  // grupo 6,   item 14
+        const params = getGroupAndIdFromUrl(); // obtengo el idGrupo de la URL para el API, puede valer 0 para casillero:  https://ecampus.com.ar/plugins/ecampusDraw/25/0/ o https://ecampus.com.ar/plugins/ecampusDraw/0/18/
+        // idGrupo e idItem SI pueden valer 0 si es casillero personal, lo que no puedo valer es NULL
+        if(params.idGrupo === null || params.idGrupo === undefined){ return };  // no especifique ningun grupo
+        if(params.idItem === null || params.idItem === undefined){ return };    // no espeicifique ningun item
+              
+        //fetch('http://localhost/ecampus/public_html/API/v1/ecampusDraw/'+params.idGrupo+'/'+params.idItem, {
+        fetch('../../../API/v1/ecampusDraw/'+params.idGrupo+'/'+params.idItem, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonForStorage)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            console.log("si funcinó debería hacer un reload de la página con la nueva URL que incluye el id del item!!!");
+
+        })
+        .catch(error => {
+            console.error(error);
+        });
+      }
+      
+    
+
+      //  ----------------------------- FIN Funciones para interactar con eCampus -----------------------------
 
    
       const renderWelcome = () => {
@@ -151,6 +359,7 @@ export default function App() {
               </>
         );
       }
+
 
       const renderFooter = () => {
         return (
@@ -205,40 +414,43 @@ export default function App() {
       };
   
     const updateScene = () => {
-        console.log("haciendo update de SCENE!");
+      console.log("haciendo update de SCENE!");
       const sceneData = {
-        elements: [
-          {
-            type: "rectangle",
-            version: 141,
-            versionNonce: 361174001,
-            isDeleted: false,
-            id: "oDVXy8D6rom3H1-LLH2-f",
-            fillStyle: "hachure",
-            strokeWidth: 1,
-            strokeStyle: "solid",
-            roughness: 1,
-            opacity: 100,
-            angle: 0,
-            x: 100.50390625,
-            y: 93.67578125,
-            strokeColor: "#c92a2a",
-            backgroundColor: "transparent",
-            width: 186.47265625,
-            height: 141.9765625,
-            seed: 1968410350,
-            groupIds: [],
-          },
-        ],
-        appState: {
-          viewBackgroundColor: "#edf2ff",
+      elements: [
+        {
+          type: "rectangle",
+          version: 141,
+          versionNonce: 361174001,
+          isDeleted: false,
+          id: "oDVXy8D6rom3H1-LLH2-f",
+          fillStyle: "hachure",
+          strokeWidth: 1,
+          strokeStyle: "solid",
+          roughness: 1,
+          opacity: 100,
+          angle: 0,
+          x: 100.50390625,
+          y: 93.67578125,
+          strokeColor: "#c92a2a",
+          backgroundColor: "transparent",
+          width: 186.47265625,
+          height: 141.9765625,
+          seed: 1968410350,
+          groupIds: [],
         },
+      ],
+      appState: {
+        viewBackgroundColor: "#edf2ff",
+      },
       };
+      // que raro qeu se llame a sí misma esta funcion? o tal vez updateScene es un método del API y mi función también se llama updateScene
       //excalidrawRef.current.updateScene(sceneData);
       excalidrawAPI?.updateScene(sceneData);
     };
 
-  
+
+   
+
     //const device=useDevice();
 
 
@@ -251,17 +463,17 @@ export default function App() {
       <Excalidraw 
         ref={(api) => setExcalidrawAPI(api)}
         // no uso initialData porque uso WelcomeScreen
-        //initialData={InitialData}
+        // initialData={InitialData}
         autoFocus={true}
         UIOptions={{ canvasActions: { loadScene: true, theme:true } }}
         onChange= {(elements, state) => { 
                     //console.log("Elements :", elements, "State : ", state) 
                     //console.log("State : ", state);
-                    console.log("Elements es: ",elements);
+                    //console.log("Elements es: ",elements);
 
                     const count = elements.filter((obj) => obj.isDeleted != true).length;
                     //const cantElementos=elements.length; // borrados y sin borrar..
-                    console.log("cant elemntos Activos es: ",count);
+                    //console.log("cant elemntos Activos es: ",count);
                     setCantElementos(count);
                   }
                   }
@@ -302,8 +514,11 @@ export default function App() {
               <MainMenu.Item onSelect={() => window.alert("Prox.")}>
                 Abrir Galeria
               </MainMenu.Item>
-              <MainMenu.Item onSelect={() => window.alert("Prox.")}>
+              <MainMenu.Item onSelect={saveToDB}>
                 Enviar a Casillero
+              </MainMenu.Item>
+              <MainMenu.Item onSelect={openFromDB}>
+                Abrir mi TP
               </MainMenu.Item>
             </MainMenu.Group>
             

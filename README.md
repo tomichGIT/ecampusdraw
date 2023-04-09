@@ -1,5 +1,11 @@
 # ecampusdraw
-whiteboard compartido en react, basado en excalidraw
+Whiteboard compartido en React, basado en excalidraw
+Integrar como plugin de eCampus
+
+## Funcionalidades:
+- [ ] Guardar pizarras en DB
+- [ ] Crear pizarras por cada grupo
+- [ ] Integrar librería de objetos personalizados
 
 documentación oficial:
 [docs](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/installation)

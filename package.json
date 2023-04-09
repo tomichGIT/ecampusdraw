@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "whiteboard compartido",
   "main": "src/index.js",
-  "homepage": "/ecampusdraw",
+  "homepage": "eplugins/ecampusdraw",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
